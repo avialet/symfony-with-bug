@@ -1,0 +1,32 @@
+# BUG: Insecure security configuration
+security:
+    # BUG: Using plaintext password hasher
+    password_hashers:
+        App\Entity\User:
+            algorithm: plaintext
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: username
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            lazy: true
+            provider: app_user_provider
+
+            # BUG: No remember_me security
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 31536000  # BUG: 1 year - way too long
+                always_remember_me: true  # BUG: Always enabled
+
+    # BUG: No access control rules - everything is publicly accessible
+    access_control:
+        # BUG: Admin area not protected
+        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # - { path: ^/api, roles: ROLE_USER }
