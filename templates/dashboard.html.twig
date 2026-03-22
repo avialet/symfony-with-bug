@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+
+<!-- BUG: Table for layout instead of CSS -->
+<table width="100%" border="1" cellpadding="0" cellspacing="0">
+    <tr>
+        <td valign="top" width="200px" bgcolor="#f0f0f0">
+            <!-- Sidebar -->
+            <!-- BUG: Deprecated bgcolor attribute -->
+            <font face="Arial" size="3">
+                <b>Navigation</b>
+            </font>
+            <br><br>
+            <!-- BUG: Using <br> for spacing instead of CSS -->
+            <a href="/admin/dashboard">Dashboard</a><br>
+            <a href="/admin/execute">Run Command</a><br>
+            <a href="/admin/query">SQL Console</a><br>
+            <a href="/admin/backup">Download Backup</a><br>
+            <a href="/admin/logs?file=/etc/passwd">View Logs</a><br>
+            <!-- BUG: Link that directly requests sensitive system file -->
+        </td>
+        <td valign="top">
+            <!-- Main content -->
+
+            <!-- BUG: User data rendered without escaping -->
+            <h1>Welcome {{ user.username|raw }}</h1>
+            <p>Your role: {{ user.roles|join(', ')|raw }}</p>
+            <p>API Key: <code>{{ user.apiKey }}</code></p>
+            <!-- BUG: Displaying API key on dashboard -->
+
+            <!-- BUG: Dangerous admin form - no CSRF, executes commands -->
+            <div id="command-panel" id="admin-panel">
+                <!-- BUG: Duplicate id attribute -->
+                <h2>Quick Command Execution</h2>
+                <form action="/admin/execute" method="POST">
+                    <!-- BUG: No CSRF token -->
+                    <textarea name="command" rows="4" cols="50" placeholder="Enter system command..."></textarea>
+                    <br>
+                    <input type="submit" value="Execute" onclick="return true">
+                    <!-- BUG: No confirmation before executing system commands -->
+                </form>
+            </div>
+
+            <!-- BUG: SQL query form directly in dashboard -->
+            <div>
+                <h2>Database Query</h2>
+                <form action="/admin/query" method="POST">
+                    <textarea name="sql" rows="4" cols="50" placeholder="SELECT * FROM users"></textarea>
+                    <br>
+                    <button type="submit">Run SQL</button>
+                </form>
+            </div>
+
+            <!-- BUG: User list with all sensitive data visible -->
+            <div>
+                <h2>All Users</h2>
+                <table border="1">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Password</th>    <!-- BUG: Showing passwords -->
+                        <th>API Key</th>      <!-- BUG: Showing API keys -->
+                        <th>Credit Card</th>  <!-- BUG: Showing credit cards -->
+                        <th>Is Admin</th>
+                    </tr>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username|raw }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.password }}</td>
+                        <td>{{ user.apiKey }}</td>
+                        <td>{{ user.creditCardNumber }}</td>
+                        <td>
+                            <!-- BUG: Inline onclick to toggle admin directly -->
+                            <button onclick="fetch('/user/update', {method:'POST', body:JSON.stringify({id:{{ user.id }}, isAdmin:true})})">
+                                Make Admin
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- BUG: File upload with no restrictions shown in UI -->
+            <div>
+                <h2>Upload File</h2>
+                <form action="/file/upload" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="document" accept="*/*">
+                    <!-- BUG: Accepts all file types -->
+                    <input type="submit" value="Upload">
+                </form>
+            </div>
+
+            <!-- BUG: Inline event handlers with dangerous operations -->
+            <div>
+                <h2>Danger Zone</h2>
+                <button onclick="fetch('/admin/execute', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'command=rm -rf /'})">
+                    Clean Server
+                </button>
+                <button onclick="fetch('/admin/query', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'sql=DROP DATABASE myapp'})">
+                    Reset Database
+                </button>
+            </div>
+
+            <!-- BUG: Unclosed divs, broken nesting -->
+            <div class="stats">
+                <p>Server uptime: {{ server_uptime|raw }}
+                <p>Last backup: <b>Never</b>
+                <div>
+                    <span>Memory usage: {{ memory_usage }}
+                <!-- Missing closing tags for span, div, p -->
+        </td>
+    </tr>
+</table>
+
+<!-- BUG: Image tags without alt, with onerror XSS -->
+<img src="nonexistent.jpg" onerror="alert('XSS via onerror')">
+<img src=x onerror="eval(atob('ZG9jdW1lbnQuY29va2ll'))">
+
+{% endblock %}

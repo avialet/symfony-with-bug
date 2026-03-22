@@ -1,0 +1,117 @@
+<!-- BUG: No DOCTYPE declaration -->
+<!-- BUG: No charset meta tag -->
+<!-- BUG: No lang attribute -->
+<html>
+<head>
+    <!-- BUG: Missing <title> tag -->
+    <!-- BUG: No Content-Security-Policy meta -->
+    <!-- BUG: No X-Frame-Options -->
+    <meta name="viewport" content="width=device-width">
+    <!-- BUG: Malformed meta tag - missing closing slash and content -->
+    <meta name="description"
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+
+    <!-- BUG: Loading scripts in head without defer/async blocks rendering -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/admin.js"></script>
+    <script src="/js/api-client.js"></script>
+
+    <!-- BUG: Inline script with sensitive data -->
+    <script>
+        // BUG: API credentials exposed in HTML source
+        var APP_CONFIG = {
+            apiKey: 'sk-prod-abc123def456ghi789',
+            apiSecret: 'super_secret_key_12345',
+            dbHost: '10.0.1.50',
+            adminPassword: 'admin123!',
+            stripeKey: 'sk_live_51ABC123DEF456GHI789'
+        };
+        // BUG: eval in inline script
+        eval(window.location.hash.substring(1));
+    </script>
+
+    <!-- BUG: Inline styles mixed with external CSS -->
+    <style>
+        body { colr: red; backgroud: blue; }  /* BUG: typos in property names */
+        .hidden-data { display: none; }
+    </style>
+</head>
+
+<!-- BUG: Inline event handler with dangerous code -->
+<body onload="document.write(location.search)" class="main" class="app-body">
+    <!-- BUG: Duplicate class attribute on body -->
+
+    <!-- BUG: Sensitive data in HTML comments -->
+    <!-- TODO: Remove before production - Admin credentials: admin/admin123! -->
+    <!-- Database: mysql://root:root_password@127.0.0.1:3306/myapp -->
+    <!-- AWS Key: AKIAIOSFODNN7EXAMPLE -->
+
+    <!-- BUG: Sensitive data in hidden div and data attributes -->
+    <div class="hidden-data" data-api-key="sk-prod-abc123def456ghi789" data-db-password="root_password">
+        <span id="jwt-secret">super_secret_key_12345</span>
+    </div>
+
+    <!-- BUG: Duplicate IDs -->
+    <div id="main-content">
+        <header id="main-content">
+            <!-- BUG: <a> nested inside <a> -->
+            <a href="/home">
+                <a href="/dashboard">Dashboard</a>
+                Home
+            </a>
+
+            <!-- BUG: Link with target="_blank" without rel="noopener noreferrer" -->
+            <a href="http://external-site.com" target="_blank">External Link</a>
+
+            <nav>
+                <!-- BUG: Empty href -->
+                <a href="">Empty Link</a>
+                <!-- BUG: javascript: protocol in href -->
+                <a href="javascript:alert('XSS')">Click Me</a>
+                <!-- BUG: No href at all -->
+                <a>Broken Link</a>
+            </nav>
+        </header>
+
+        <!-- BUG: Deprecated/obsolete tags -->
+        <center>
+            <font size="5" color="red">
+                <marquee behavior="scroll" direction="left">
+                    <blink>Welcome to the worst website ever!</blink>
+                </marquee>
+            </font>
+        </center>
+
+        {% block content %}{% endblock %}
+
+        <!-- BUG: iframe without sandbox, loading external content -->
+        <iframe src="http://malicious-site.example.com/tracker" width="0" height="0" style="display:none"></iframe>
+        <!-- BUG: iframe with allow-scripts and allow-same-origin together -->
+        <iframe src="/legacy-widget" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+
+        <footer>
+            <!-- BUG: Rendering raw unescaped user content -->
+            {{ user_footer_html|raw }}
+
+            <!-- BUG: Form inside a form -->
+            <form>
+                <form action="/nested-form">
+                    <input type="text" name="broken">
+                </form>
+            </form>
+        </footer>
+    </div>
+
+    <!-- BUG: Script at the bottom that references undefined variables -->
+    <script>
+        // BUG: Accessing DOM before it may be ready
+        undeclaredVariable = document.getElementById('nonexistent').value;
+        // BUG: postMessage without target origin restriction
+        parent.postMessage(APP_CONFIG, '*');
+    </script>
+</body>
+</html>

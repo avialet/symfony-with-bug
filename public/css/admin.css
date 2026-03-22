@@ -1,0 +1,214 @@
+/* BUG: Admin CSS - more terrible practices */
+
+/* ============================================================
+   BUG: Universal selector performance killer
+   ============================================================ */
+* {
+    box-sizing: border-box !important;
+    margin: 0 !important;             /* BUG: Overrides everything */
+    padding: 0 !important;            /* BUG: Overrides everything */
+    transition: all 2s ease !important; /* BUG: Transition on EVERYTHING */
+    outline: none !important;          /* BUG: Removes focus indicators - accessibility issue */
+}
+
+*::before, *::after {
+    transition: all 2s ease !important;
+    animation: shake 1s infinite !important;  /* BUG: Everything shakes */
+}
+
+/* ============================================================
+   BUG: Accessibility nightmares
+   ============================================================ */
+
+/* BUG: Focus outline removed globally */
+:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* BUG: Links indistinguishable from text */
+a {
+    color: inherit !important;
+    text-decoration: none !important;
+    cursor: default !important;        /* BUG: No pointer cursor on links */
+}
+
+/* BUG: Tiny unreadable text */
+.fine-print {
+    font-size: 4px !important;         /* BUG: Illegible */
+    color: #fefefe !important;         /* BUG: Nearly white on white */
+    line-height: 1px !important;
+}
+
+/* BUG: Insufficient color contrast */
+.low-contrast {
+    color: #cccccc;
+    background-color: #dddddd;        /* BUG: 1.15:1 contrast ratio */
+}
+
+.even-worse-contrast {
+    color: #f0f0f0;
+    background-color: #f5f5f5;        /* BUG: Nearly invisible */
+}
+
+/* BUG: Hidden but important content */
+.skip-nav,
+.sr-only,
+.screen-reader-text {
+    display: none !important;          /* BUG: Should use clip-path, not display:none */
+    /* Screen readers won't read display:none content */
+}
+
+/* ============================================================
+   BUG: Admin panel that looks nothing like a real admin panel
+   ============================================================ */
+
+.admin-panel {
+    backgroud-color: darkred;          /* BUG: Typo */
+    widht: 100vw;                      /* BUG: Typo */
+    heigth: 100vh;                     /* BUG: Typo */
+    postion: fixed;                    /* BUG: Typo */
+    overflw: scroll;                   /* BUG: Typo */
+    z-indx: 99999;                     /* BUG: Typo */
+}
+
+/* BUG: Scrollbar styling that breaks in Firefox */
+.admin-panel::-webkit-scrollbar {
+    width: 0px;                        /* BUG: Hides scrollbar in Chrome only */
+    display: none;
+}
+
+/* ============================================================
+   BUG: Form styling disasters
+   ============================================================ */
+
+/* BUG: Hides required field indicators */
+input:required::after {
+    content: '';
+    display: none;
+}
+
+/* BUG: Makes disabled inputs look enabled */
+input:disabled,
+button:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 1 !important;
+    pointer-events: auto !important;   /* BUG: Disabled but still clickable?! */
+    cursor: pointer !important;
+    background: white !important;
+    color: black !important;
+}
+
+/* BUG: Invalid state looks normal */
+input:invalid {
+    border-color: green !important;    /* BUG: Green border on invalid input */
+    background: #e8ffe8 !important;    /* BUG: Green background = looks valid */
+}
+
+/* BUG: Valid state looks like an error */
+input:valid {
+    border-color: red !important;      /* BUG: Red border on valid input */
+    background: #ffe8e8 !important;    /* BUG: Red background = looks invalid */
+}
+
+/* BUG: Password inputs shown as text via CSS */
+input[type="password"] {
+    -webkit-text-security: none !important;  /* BUG: Shows password as plaintext */
+    font-family: monospace !important;
+}
+
+/* ============================================================
+   BUG: Table styling horror
+   ============================================================ */
+
+table {
+    border-collapse: separate !important;
+    border-spacing: 15px !important;   /* BUG: Huge gaps between cells */
+    width: 2000px !important;          /* BUG: Fixed width, forces horizontal scroll */
+    table-layout: auto !important;
+}
+
+td, th {
+    white-space: nowrap !important;    /* BUG: Content never wraps */
+    overflow: visible !important;      /* BUG: Content overflows everywhere */
+    max-width: none !important;
+    padding: 50px !important;          /* BUG: Excessive padding */
+}
+
+/* ============================================================
+   BUG: Print styles that hide everything
+   ============================================================ */
+@media print {
+    * {
+        display: none !important;      /* BUG: Can't print anything */
+    }
+}
+
+/* ============================================================
+   BUG: Dark mode that's unreadable
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black !important;
+        color: #111111 !important;     /* BUG: Nearly black text on black bg */
+    }
+
+    a { color: #0a0a0a !important; }   /* BUG: Invisible links */
+    input { background: #050505 !important; color: #101010 !important; }  /* BUG: Invisible inputs */
+}
+
+/* ============================================================
+   BUG: Pseudo-elements chaos
+   ============================================================ */
+
+/* BUG: Multiple content properties */
+.element::before {
+    content: "Hello";
+    content: "World";                  /* BUG: Overrides previous content */
+    content: attr(data-password);      /* BUG: Exposing password via CSS! */
+    display: block;
+    position: absolute;
+    top: -9999px;                      /* BUG: Off-screen but still in DOM */
+}
+
+/* BUG: Using CSS to display sensitive data */
+[data-api-key]::after {
+    content: attr(data-api-key);       /* BUG: Rendering API key via CSS */
+    display: block;
+    font-size: 20px;
+    color: red;
+}
+
+[data-db-password]::after {
+    content: "DB Password: " attr(data-db-password);  /* BUG: Showing DB password */
+    display: block;
+}
+
+/* ============================================================
+   BUG: Circular imports / recursive references
+   ============================================================ */
+/* BUG: Importing self */
+@import url("admin.css");
+
+/* BUG: Importing non-existent files */
+@import url("nonexistent.css");
+@import url("http://evil-cdn.com/inject.css");  /* BUG: Loading CSS from untrusted source */
+
+/* ============================================================
+   BUG: CSS that conflicts with style.css
+   ============================================================ */
+body {
+    background: purple !important;     /* BUG: Conflicts with style.css */
+    color: yellow !important;
+    font-size: 8px !important;         /* BUG: Tiny text */
+    cursor: wait !important;           /* BUG: Loading cursor always */
+    user-select: none !important;      /* BUG: Can't select text */
+    pointer-events: none !important;   /* BUG: Can't click anything */
+}
+
+/* BUG: But then re-enable for admin elements? */
+.admin-panel {
+    pointer-events: auto !important;
+}
