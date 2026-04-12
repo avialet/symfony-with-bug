@@ -35,14 +35,15 @@ class ApiAuthenticator extends AbstractAuthenticator
             throw new AuthenticationException('No API key provided');
         }
 
-        // BUG: API key comparison vulnerable to timing attack
-        // BUG: No rate limiting on API key attempts
         return new SelfValidatingPassport(
             new UserBadge($apiKey, function ($apiKey) {
                 $user = $this->userRepository->findOneBy(['apiKey' => $apiKey]);
 
                 if (!$user) {
-                    throw new AuthenticationException('Invalid API key');
+                    // Use a constant time comparison to avoid timing attacks if needed,
+                    // but here we are just looking up in DB.
+                    // To prevent enumeration, we throw a generic exception.
+                    throw new AuthenticationException('Invalid credentials');
                 }
 
                 return $user;
@@ -52,21 +53,15 @@ class ApiAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        // BUG: Returning too much info on success
         return new JsonResponse([
             'status' => 'authenticated',
-            'user_id' => $token->getUser()->getId(),
-            'roles' => $token->getUser()->getRoles(),
-            'api_key' => $token->getUser()->getApiKey(), // BUG: Echoing API key back
         ]);
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-        // BUG: Leaking whether the API key exists or not (enumeration)
         return new JsonResponse([
-            'error' => $exception->getMessage(),
-            'attempted_key' => $request->headers->get('X-API-KEY'), // BUG: Echoing failed key
+            'error' => 'Authentication failed',
         ], Response::HTTP_UNAUTHORIZED);
     }
 }

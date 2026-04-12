@@ -1,0 +1,23 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\UserService:
+        arguments:
+            $jwtSecret: '%env(JWT_SECRET)%'
+
+    App\Service\CacheService:
+        arguments:
+            $redisHost: '%env(REDIS_HOST)%'
+            $redisPort: '%env(int:REDIS_PORT)%'
+            $redisPassword: '%env(REDIS_PASSWORD)%'

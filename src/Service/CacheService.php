@@ -4,62 +4,66 @@ namespace App\Service;
 
 class CacheService
 {
-    // BUG: Hardcoded Redis credentials
-    private string $redisHost = '10.0.1.50';
-    private int $redisPort = 6379;
-    private string $redisPassword = 'redis_secret_2024';
+    private string $redisHost;
+    private int $redisPort;
+    private string $redisPassword;
 
     private $connection = null;
 
-    // BUG: Memory leak - connections never closed
+    public function __construct(string $redisHost, int $redisPort, string $redisPassword)
+    {
+        $this->redisHost = $redisHost;
+        $this->redisPort = $redisPort;
+        $this->redisPassword = $redisPassword;
+    }
+
     public function getConnection()
     {
-        // BUG: Creating new connection every time instead of reusing
-        $this->connection = new \Redis();
-        $this->connection->connect($this->redisHost, $this->redisPort);
-        $this->connection->auth($this->redisPassword);
+        if ($this->connection === null) {
+            $this->connection = new \Redis();
+            $this->connection->connect($this->redisHost, $this->redisPort);
+            if ($this->redisPassword) {
+                $this->connection->auth($this->redisPassword);
+            }
+        }
         return $this->connection;
     }
 
-    // BUG: Cache poisoning possible
     public function set(string $key, $value, int $ttl = 3600): void
     {
         $conn = $this->getConnection();
-        // BUG: No key sanitization - cache injection
-        // BUG: Serializing objects with serialize() instead of json_encode
-        $conn->setex($key, $ttl, serialize($value));
+        // Sanitize key
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', $key);
+        // Use JSON instead of serialize
+        $conn->setex($safeKey, $ttl, json_encode($value));
     }
 
-    // BUG: Insecure deserialization from cache
     public function get(string $key)
     {
         $conn = $this->getConnection();
-        $data = $conn->get($key);
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', $key);
+        $data = $conn->get($safeKey);
 
         if ($data === false) {
             return null;
         }
 
-        // BUG: unserialize from potentially tampered cache
-        return unserialize($data);
+        // Use JSON instead of unserialize
+        return json_decode($data, true);
     }
 
-    // BUG: No error handling
     public function delete(string $key): void
     {
-        $this->getConnection()->del($key);
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', $key);
+        $this->getConnection()->del($safeKey);
     }
 
-    // BUG: Dangerous flush operation with no safeguards
-    public function clearAll(): void
-    {
-        // BUG: Flushing entire Redis database without confirmation
-        $this->getConnection()->flushDB();
-    }
+    // REMOVED clearAll() - Too dangerous to expose as a public service method without strict protection.
 
-    // BUG: Destructor not closing connection
     public function __destruct()
     {
-        // Connection leak - Redis connections not properly closed
+        if ($this->connection) {
+            $this->connection->close();
+        }
     }
 }

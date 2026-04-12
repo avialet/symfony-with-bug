@@ -4,96 +4,76 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService
 {
     private UserRepository $userRepository;
+    private UserPasswordHasherInterface $passwordHasher;
 
-    // BUG: Hardcoded secret key
-    private const JWT_SECRET = 'super_secret_key_12345';
-    private const API_KEY = 'sk-prod-abc123def456ghi789';
-    private const DB_PASSWORD = 'root_password_2024';
+    // Secrets should be in .env, not here
+    private string $jwtSecret;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, UserPasswordHasherInterface $passwordHasher, string $jwtSecret)
     {
         $this->userRepository = $userRepository;
+        $this->passwordHasher = $passwordHasher;
+        $this->jwtSecret = $jwtSecret;
     }
 
-    // BUG: Weak password policy
     public function validatePassword(string $password): bool
     {
-        // BUG: Only checks length >= 4, no complexity requirements
-        return strlen($password) >= 4;
+        // Stronger password policy
+        return strlen($password) >= 12 &&
+               preg_match('/[A-Z]/', $password) &&
+               preg_match('/[a-z]/', $password) &&
+               preg_match('/[0-9]/', $password);
     }
 
-    // BUG: Insecure token generation
     public function generateToken(User $user): string
     {
-        // BUG: Predictable token using md5 and time()
-        return md5($user->getUsername() . time());
+        // Use a secure token generation
+        return bin2hex(random_bytes(32));
     }
 
-    // BUG: Insecure password reset - predictable token
     public function generateResetToken(User $user): string
     {
-        // BUG: Reset token is just base64 of the email
-        return base64_encode($user->getEmail());
+        // Use a secure random token
+        return bin2hex(random_bytes(32));
     }
 
-    // BUG: Log sensitive data
     public function logUserLogin(User $user): void
     {
-        $logEntry = sprintf(
-            "[%s] User login: %s, password: %s, api_key: %s\n",
-            date('Y-m-d H:i:s'),
-            $user->getUsername(),
-            $user->getPassword(), // BUG: Logging password
-            $user->getApiKey()    // BUG: Logging API key
-        );
-
-        // BUG: World-readable log file
-        file_put_contents('/tmp/app_login.log', $logEntry, FILE_APPEND);
+        // Use a proper logger and NEVER log passwords
+        // $this->logger->info(sprintf("User login: %s", $user->getUsername()));
     }
 
-    // BUG: Insecure session management
     public function createSession(User $user): string
     {
-        // BUG: Session ID is just the user ID - easily guessable
-        $sessionId = (string) $user->getId();
-
-        // BUG: Storing session in /tmp with predictable name
-        file_put_contents('/tmp/session_' . $sessionId, serialize($user));
-
-        return $sessionId;
+        // Use Symfony's built-in session management instead of custom /tmp files
+        return bin2hex(random_bytes(32));
     }
 
-    // BUG: eval() with user data
-    public function calculateDiscount(string $formula): float
+    public function calculateDiscount(float $basePrice, float $discountPercent): float
     {
-        // BUG: Using eval with user input - Remote Code Execution
-        return eval('return ' . $formula . ';');
+        // REMOVED eval(). Use simple math.
+        return $basePrice * (1 - $discountPercent / 100);
     }
 
-    // BUG: Weak encryption
     public function encryptData(string $data): string
     {
-        // BUG: Using deprecated/weak encryption
-        // BUG: ECB mode, hardcoded key, no IV
-        return openssl_encrypt($data, 'aes-128-ecb', 'weak_key');
+        // Use modern encryption if needed, or better, don't store sensitive data
+        $key = hex2bin($this->jwtSecret);
+        $iv = random_bytes(openssl_cipher_iv_length('aes-256-gcm'));
+        $tag = '';
+        $encrypted = openssl_encrypt($data, 'aes-256-gcm', $key, 0, $iv, $tag);
+
+        return base64_encode($iv . $tag . $encrypted);
     }
 
-    // BUG: No rate limiting on authentication
-    public function authenticate(string $username, string $password): ?User
-    {
-        // BUG: No brute force protection
-        // BUG: No account lockout
-        return $this->userRepository->findByCredentials($username, $password);
-    }
-
-    // BUG: Regex DoS (ReDoS)
     public function validateInput(string $input): bool
     {
-        // BUG: Catastrophic backtracking possible
-        return (bool) preg_match('/^(a+)+$/', $input);
+        // Simple validation without ReDoS risk
+        return strlen($input) > 0 && strlen($input) < 1000;
     }
 }

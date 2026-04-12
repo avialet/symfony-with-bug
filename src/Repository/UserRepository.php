@@ -13,38 +13,28 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    // BUG: SQL injection in repository method
-    public function findByUsernameUnsafe(string $username): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
-        $sql = "SELECT * FROM users WHERE username LIKE '%" . $username . "%'";
-        return $conn->executeQuery($sql)->fetchAllAssociative();
-    }
-
-    // BUG: Returning all fields including sensitive data
-    public function findAllWithSensitiveData(): array
+    public function findByUsernameSafe(string $username): array
     {
         return $this->createQueryBuilder('u')
-            ->select('u.id, u.username, u.email, u.password, u.plainPassword, u.apiKey, u.creditCardNumber')
+            ->where('u.username LIKE :username')
+            ->setParameter('username', '%' . $username . '%')
             ->getQuery()
-            ->getArrayResult();
+            ->getResult();
     }
 
-    // BUG: No pagination - memory exhaustion on large datasets
-    public function findAllUsers(): array
+    public function findAllUsersPaginated(int $page = 1, int $limit = 10): array
     {
-        return $this->findAll();
+        return $this->createQueryBuilder('u')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 
-    // BUG: Debug method left in production code
-    public function debugQuery(string $rawSql): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
-        // BUG: Executing arbitrary SQL
-        return $conn->executeQuery($rawSql)->fetchAllAssociative();
-    }
+    // REMOVED: findAllWithSensitiveData - Use specific selections only when needed.
 
-    // BUG: Timing attack on password comparison
+    // REMOVED: debugQuery - Extremely dangerous.
+
     public function findByCredentials(string $username, string $password): ?User
     {
         $user = $this->findOneBy(['username' => $username]);
@@ -53,8 +43,8 @@ class UserRepository extends ServiceEntityRepository
             return null;
         }
 
-        // BUG: Direct string comparison instead of password_verify - timing attack
-        if ($user->getPassword() === $password) {
+        // Use password_verify to prevent timing attacks and handle hashed passwords
+        if (password_verify($password, $user->getPassword())) {
             return $user;
         }
 
