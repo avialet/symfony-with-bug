@@ -1,9 +1,7 @@
-# BUG: Insecure security configuration
 security:
-    # BUG: Using plaintext password hasher
     password_hashers:
         App\Entity\User:
-            algorithm: plaintext
+            algorithm: auto
 
     providers:
         app_user_provider:
@@ -18,15 +16,21 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            custom_authenticators:
+                - App\Security\ApiAuthenticator
 
-            # BUG: No remember_me security
+            logout:
+                path: app_logout
+
             remember_me:
                 secret: '%kernel.secret%'
-                lifetime: 31536000  # BUG: 1 year - way too long
-                always_remember_me: true  # BUG: Always enabled
+                lifetime: 604800 # 1 week
+                path: /
+                always_remember_me: false
 
-    # BUG: No access control rules - everything is publicly accessible
     access_control:
-        # BUG: Admin area not protected
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/user/profile, roles: ROLE_USER }
+        - { path: ^/user/update, roles: ROLE_USER }
+        - { path: ^/user/delete, roles: ROLE_ADMIN }
+        - { path: ^/product/checkout, roles: ROLE_USER }

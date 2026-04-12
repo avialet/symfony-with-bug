@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
@@ -15,20 +16,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\Column(type: 'string', length: 180)]
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Assert\NotBlank]
     private $username;
 
     #[ORM\Column(type: 'string')]
+    #[Assert\NotBlank]
+    #[Assert\Email]
     private $email;
 
     #[ORM\Column(type: 'string')]
     private $password;
 
-    // BUG: Storing password in plain text field alongside hash
-    #[ORM\Column(type: 'string', nullable: true)]
-    private $plainPassword;
-
     #[ORM\Column(type: 'string')]
+    #[Assert\NotBlank]
     private $name;
 
     #[ORM\Column(type: 'text', nullable: true)]
@@ -37,17 +38,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'json')]
     private $roles = [];
 
-    // BUG: isAdmin stored as a simple boolean - can be mass-assigned
     #[ORM\Column(type: 'boolean')]
     private $isAdmin = false;
 
-    // BUG: API key stored in plain text
     #[ORM\Column(type: 'string', nullable: true)]
     private $apiKey;
-
-    // BUG: Credit card stored in entity
-    #[ORM\Column(type: 'string', nullable: true)]
-    private $creditCardNumber;
 
     public function getId(): ?int
     {
@@ -72,7 +67,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setEmail(string $email): self
     {
-        // BUG: No email validation
         $this->email = $email;
         return $this;
     }
@@ -84,20 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setPassword(string $password): self
     {
-        // BUG: Storing password without hashing
         $this->password = $password;
-        return $this;
-    }
-
-    public function getPlainPassword(): ?string
-    {
-        return $this->plainPassword;
-    }
-
-    public function setPlainPassword(?string $plainPassword): self
-    {
-        // BUG: Plain password persisted to database
-        $this->plainPassword = $plainPassword;
         return $this;
     }
 
@@ -126,13 +107,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        return $roles;
-        // BUG: Missing default ROLE_USER guarantee
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        if ($this->isAdmin) {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
+        return array_unique($roles);
     }
 
     public function setRoles(array $roles): self
     {
-        // BUG: No validation of roles - user can set ROLE_SUPER_ADMIN
         $this->roles = $roles;
         return $this;
     }
@@ -159,18 +145,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getCreditCardNumber(): ?string
-    {
-        return $this->creditCardNumber;
-    }
-
-    public function setCreditCardNumber(?string $creditCardNumber): self
-    {
-        // BUG: No encryption of sensitive data
-        $this->creditCardNumber = $creditCardNumber;
-        return $this;
-    }
-
     public function getUserIdentifier(): string
     {
         return $this->username;
@@ -178,6 +152,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
-        // BUG: Not erasing plainPassword
+        // If you store any temporary, sensitive data on the user, clear it here
     }
 }
